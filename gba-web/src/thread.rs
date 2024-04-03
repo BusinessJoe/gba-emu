@@ -34,10 +34,10 @@ impl GbaThread {
     }
 
     pub fn start(&mut self) -> Result<(), JsValue> {
-        let worker = worker_global_scope()?;
-        let performance = worker
-                .performance()
-                .to_js_result("performance should be available")?;
+        // let worker = worker_global_scope()?;
+        // let performance = worker
+                // .performance()
+                // .to_js_result("performance should be available")?;
         
         let ticks = 100000;
 
@@ -74,13 +74,7 @@ impl GbaThread {
                 continue;
             }
 
-            let start_time = performance.now();
             self.gba.tick_multiple(ticks);
-            let end_time = performance.now();
-            let elapsed = end_time - start_time;
-            // Mult by 1000 for ms -> s
-            let ticks_per_sec = ticks as f64 / elapsed * 1000.;
-
 
             if screen_render {
                 screen_render = false;
@@ -100,6 +94,7 @@ impl GbaThread {
 }
 
 
+/*
 fn worker_global_scope() -> Result<WorkerGlobalScope, JsValue> {
     let global = js_sys::global();
     // how to properly detect this in wasm_bindgen?
@@ -109,3 +104,4 @@ fn worker_global_scope() -> Result<WorkerGlobalScope, JsValue> {
         Err("Not in worker".into())
     }
 }
+*/

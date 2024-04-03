@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"wasm": "npx wasm-pack build --release ../gba-web --target web -- -Z build-std=std,panic_abort && mkdir -p ./src/lib/pkg/debug/ && cp -r ../gba-web/pkg/* ./src/lib/pkg/debug/",
+		"wasm": "npx wasm-pack build ../gba-web --target web -- -Z build-std=std,panic_abort && mkdir -p ./src/lib/pkg/debug/ && cp -r ../gba-web/pkg/* ./src/lib/pkg/debug/",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
@@ -31,6 +31,10 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@sveltejs/vite-plugin-svelte": "^3.0.2"
+		"@sveltejs/adapter-auto": "^3.2.0",
+		"@sveltejs/vite-plugin-svelte": "^3.0.2",
+		"url": "^0.11.3",
+		"vite-plugin-top-level-await": "^1.4.1",
+		"vite-plugin-wasm": "^3.3.0"
 	}
 }

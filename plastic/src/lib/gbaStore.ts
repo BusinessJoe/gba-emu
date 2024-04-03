@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import initWasm, { Gba } from '$lib/pkg/debug/gba_web';
+import initWasm, { Gba, initThreadPool } from '$lib/pkg/debug/gba_web';
 
 class MockGba {
 	free() {}
@@ -63,6 +63,12 @@ export const tick = (numTicks: number) => {
 };
 
 export const init = async () => {
+	console.log('Running init()');
 	await initWasm();
-	gbaStore.set(new Gba());
+    await initThreadPool(1);
+	console.log('WASM initialized');
+	let gba = new Gba();
+	console.log('Gba controller created');
+	console.log(gba);
+	gbaStore.set(gba);
 };

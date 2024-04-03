@@ -14,12 +14,9 @@
     }
 
 	onMount(() => {
-        async function foo() {
-            await init();
-        }
-        foo();
-
-        rid = requestAnimationFrame(tickGba);
+        init().then(() => {
+            rid = requestAnimationFrame(tickGba);
+        });
 
         // Maybe we should free the old GBA as well?
         return () => cancelAnimationFrame(rid);

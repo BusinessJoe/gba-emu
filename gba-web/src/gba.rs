@@ -6,7 +6,8 @@ use gba_core::Key;
 use js_sys::Uint8ClampedArray;
 use wasm_bindgen::prelude::*;
 
-use wasm_thread as thread;
+//use wasm_thread as thread;
+use web_sys::console;
 
 use crate::thread::GbaThread;
 use crate::to_js_result::ToJsResult;
@@ -27,15 +28,20 @@ impl Gba {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Gba {
         console_error_panic_hook::set_once();
+        console::log_1(&"Gba controller constructor".into());
 
         let (to_thread, from_control)  = mpsc::channel();
         let (to_control, from_thread)  = mpsc::channel();
 
         
-        let _join_handle = thread::spawn(move|| {
+        let _join_handle = rayon::spawn(move|| {
+            console::log_1(&"Hello from web worker".into());
             let mut gba_thread = GbaThread::new(to_control, from_control);
             gba_thread.start().unwrap();
         });
+
+        console::log_1(&format!("Join handle: {:?}", _join_handle).into());
+
         
 
         Gba {

@@ -30,13 +30,17 @@ web-sys = { version = "0.3", features = [
     "Performance",
     "WorkerGlobalScope",
 ] }
-wasm_thread = "0.3.0"
+# wasm_thread = "0.3.0"
+# wasm_thread = { path = "../wasm_thread" }
+wasm-bindgen-rayon = "1.2.1"
+rayon = "1.10.0"
 wasm-bindgen-futures = "0.4"
 
 [profile.release]
 lto = true
 debug = true
 codegen-units = 1
+overflow-checks = true
 
 [target.wasm32-unknown-unknown]
 rustflags = ["-C", "target-feature=+atomics,+bulk-memory,+mutable-globals"]
