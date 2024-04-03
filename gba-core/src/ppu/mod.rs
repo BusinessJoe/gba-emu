@@ -202,9 +202,9 @@ impl Ppu {
                 };
                 let palette = &self.bg_obj_palette;
 
-                let palette_index = 2 * bg[pixel_index];
-                let color_lo = palette[usize::from(palette_index)];
-                let color_hi = palette[usize::from(palette_index) + 1];
+                let palette_index = 2 * usize::from(bg[pixel_index]);
+                let color_lo = palette[palette_index];
+                let color_hi = palette[palette_index + 1];
 
                 let color = u16::from_le_bytes([color_lo, color_hi]);
                 decode_color(color)
