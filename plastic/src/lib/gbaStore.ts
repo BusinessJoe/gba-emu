@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import initWasm, { Gba, initThreadPool } from '$lib/pkg/debug/gba_web';
+import initWasm, { Gba, initThreadPool } from '$lib/pkg/gba_web';
 
 class MockGba {
 	free() {}

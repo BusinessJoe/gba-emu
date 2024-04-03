@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { gbaStore } from './gbaStore';
-import type { Gba } from './pkg/debug/gba_web';
+import type { Gba } from './pkg/gba_web';
 
 interface DebuggerData {
 	screen_array: Uint8ClampedArray;

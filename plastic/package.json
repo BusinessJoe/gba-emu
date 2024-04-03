@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"wasm": "npx wasm-pack build ../gba-web --target web -- -Z build-std=std,panic_abort && mkdir -p ./src/lib/pkg/debug/ && cp -r ../gba-web/pkg/* ./src/lib/pkg/debug/",
+		"wasm": "npx wasm-pack build ../gba-web --target web --out-dir ../plastic/src/lib/pkg/ -- -Z build-std=std,panic_abort",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",

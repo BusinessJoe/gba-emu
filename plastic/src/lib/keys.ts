@@ -1,4 +1,4 @@
-import { Gba, Key } from '$lib/pkg/debug/gba_web';
+import { Gba, Key } from '$lib/pkg/gba_web';
 
 export const handleKey = (gba: Gba | undefined, event: KeyboardEvent, pressed: boolean) => {
 	const key = getKey(event);
