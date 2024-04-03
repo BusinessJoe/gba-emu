@@ -1,3 +1,5 @@
+use num_traits::{WrappingAdd, WrappingMul};
+
 use crate::{cpu::CPSR, utils::AddressableBits};
 
 use super::ArmInstruction;
@@ -36,7 +38,7 @@ impl ArmInstruction for Mla {
         let rs = cpu.get_reg(instruction.bits(8, 11));
         let rm = cpu.get_reg(instruction.bits(0, 3));
 
-        let result = rm * rs + rn;
+        let result = rm.wrapping_mul(rs).wrapping_add(rn);
         cpu.set_reg(rd, result);
         if s == 1 {
             cpu.set_flag(CPSR::N, result.bit(31) == 1);
