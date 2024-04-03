@@ -11,7 +11,7 @@ pub enum Interrupt {
 
 pub struct IoMap {
     mock: [u8; 0x400],
-    keyinput: u8,
+    keyinput: u16,
     ime: [u8; 4],
     ie: [u8; 2],
     // Normally called 'IF', but 'if' is a keyword.
@@ -99,7 +99,8 @@ impl IoMap {
             0..=0x3ffffff => {
                 unreachable!()
             }
-            0x4000130 => self.keyinput,
+            0x4000130 => self.keyinput as u8,
+            0x4000131 => (self.keyinput >> 8) as u8,
             0x4000200..=0x4000201 => self.ie[index - 0x4000200],
             0x4000202..=0x4000203 => self.irq_flags[index - 0x4000202],
             0x4000208..=0x400020b => self.ime[index - 0x4000208],
@@ -130,7 +131,8 @@ impl IoMap {
             0..=0x3ffffff => {
                 unreachable!()
             }
-            0x4000130 => self.keyinput = value,
+            0x4000130 => self.keyinput = (self.keyinput & 0xff00) | value as u16,
+            0x4000131 => self.keyinput = (self.keyinput & 0xff) | value as u16,
             0x4000200..=0x4000201 => self.ie[index - 0x4000200] = value,
             0x4000202..=0x4000203 => self.irq_flags[index - 0x4000202] &= !value,
             0x4000208..=0x400020b => self.ime[index - 0x4000208] = value,

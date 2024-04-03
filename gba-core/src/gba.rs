@@ -41,6 +41,10 @@ impl Default for GbaCore {
 }
 
 impl GbaCore {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Return the current screen data
     pub fn screen(&self) -> Vec<u8> {
         self.bus.ppu.screen()
