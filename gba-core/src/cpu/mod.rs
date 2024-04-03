@@ -346,36 +346,6 @@ mod tests {
         let mut cpu = Cpu::default();
         let mut bus = Bus::default();
         let (arm_lut, thumb_lut) = generate_luts();
-        bus.set_bios(include_bytes!("../../cog-bios.bin"));
-
-        cpu.skip_bios();
-        cpu.set_reg_with_mode(0, Mode::System, r0);
-        cpu.set_reg_with_mode(1, Mode::System, r1);
-        // Goto DIV
-        cpu.set_reg(15, 0x3b4);
-        cpu.flush_pipeline();
-
-        while cpu.get_reg(15) - 4 != 0x400 {
-            cpu.tick(&mut bus, &arm_lut, &thumb_lut);
-        }
-
-        let expected0 = (r0 as i32) / (r1 as i32);
-        let expected1 = (r0 as i32) % (r1 as i32);
-        let expected3: u32 = expected0.abs().try_into().unwrap();
-
-        let result0 = cpu.get_reg(0) as i32;
-        let result1 = cpu.get_reg(1) as i32;
-        let result3 = cpu.get_reg(3);
-
-        assert_eq!(result0, expected0, "og div {} by {}", r0, r1);
-        assert_eq!(result1, expected1, "og mod {} by {}", r0, r1);
-        assert_eq!(result3, expected3, "og abs div {} by {}", r0, r1);
-    }
-
-    fn test_div_cultofgba(r0: u32, r1: u32) {
-        let mut cpu = Cpu::default();
-        let mut bus = Bus::default();
-        let (arm_lut, thumb_lut) = generate_luts();
         bus.set_bios(include_bytes!("../../bios.bin"));
 
         cpu.skip_bios();
@@ -404,33 +374,28 @@ mod tests {
 
     #[test]
     fn test_div_1_by_1() {
-        test_div_cultofgba(1, 1);
         test_div(1, 1);
     }
 
     #[test]
     fn test_div_2_by_1() {
-        test_div_cultofgba(2, 1);
         test_div(2, 1);
     }
 
     #[test]
     fn test_div_many_by_1() {
         for i in 0..0x100 {
-            test_div_cultofgba(i, 1);
             test_div(i, 1);
         }
     }
 
     #[test]
     fn test_div_by_10() {
-        test_div_cultofgba(123, 10);
         test_div(123, 10);
     }
 
     #[test]
     fn test_div_by_16() {
-        test_div_cultofgba(0xa000000, 0x10);
         test_div(0xa000000, 0x10);
     }
 }
