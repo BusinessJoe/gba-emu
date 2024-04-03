@@ -19,7 +19,7 @@ pub struct Regs {
 
 impl Regs {
     pub fn get(&self, reg: u32, mode: &Mode) -> u32 {
-        assert!(reg <= 15);
+        debug_assert!(reg <= 15);
         let reg: usize = reg.try_into().unwrap();
         match *mode {
             Mode::User | Mode::System => self.sys_user[reg],
@@ -33,7 +33,7 @@ impl Regs {
     }
 
     pub fn get_mut(&mut self, reg: u32, mode: &Mode) -> &mut u32 {
-        assert!(reg <= 15);
+        debug_assert!(reg <= 15);
         let reg: usize = reg.try_into().unwrap();
         match *mode {
             Mode::User | Mode::System => &mut self.sys_user[reg],
