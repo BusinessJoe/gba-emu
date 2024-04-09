@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { DISPLAYS } from "$lib/debuggerStore";
 	import { gbaStore } from "$lib/gbaStore";
+	import { clearRunPeriodically, runPeriodically } from "$lib/utils";
+	import { onMount } from "svelte";
 
     let canvas: HTMLCanvasElement;
     let gba = $gbaStore;
@@ -8,6 +11,19 @@
 
     const width = 16;
     const height = 16;
+
+    function refresh() {
+        if (ctx) {
+            let imageData = new ImageData(DISPLAYS.palettes, 16);
+            ctx.putImageData(imageData, 0, 0);
+        }
+    }
+
+    let id: number;
+    onMount(() => {
+        id = runPeriodically(refresh, 60);
+        return () => clearRunPeriodically(id);
+    });
 
     $: {
         if (ctx && gba) {

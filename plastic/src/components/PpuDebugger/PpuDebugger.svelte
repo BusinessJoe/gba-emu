@@ -20,15 +20,21 @@
     let bg_mode = 0;
 
     // Refresh ppu debug data every frame
-    let rid: number;
     function refresh_tiles() {
         if (gba) {
             gba.request_tiles(use_256_colors ? undefined : palette);
         }
     }
+    function refresh_palettes() {
+        if (gba) {
+            gba.request_palettes();
+        }
+    }
     function refresh() {
         if (ppu_panel == "tiles") {
             refresh_tiles();
+        } else if (ppu_panel == "palettes") {
+            refresh_palettes();
         }
     }
     onMount(() => {
@@ -39,10 +45,6 @@
 </script>
 
 <div id="ppu-debugger">
-    <label>
-        <input type="radio" bind:group={ppu_panel} value={"tilemaps"}>
-        Tilemaps??
-    </label>
     <label>
         <input type="radio" bind:group={ppu_panel} value={"tiles"}>
         Tiles

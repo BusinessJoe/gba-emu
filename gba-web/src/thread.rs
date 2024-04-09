@@ -73,6 +73,10 @@ impl GbaThread {
                         let tiles = self.gba.get_tiles(palette);
                         self.tx.send(Response::TileData(tiles));
                     }
+                    Request::Palettes => {
+                        let palettes = self.gba.get_palettes();
+                        self.tx.send(Response::PaletteData(palettes));
+                    }
                 }
             }
              

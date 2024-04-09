@@ -45,6 +45,6 @@ pub struct BackgroundsState {
 pub struct DebuggerDisplays {
     pub screen: Option<Uint8ClampedArray>,
     pub tiles: Option<Uint8ClampedArray>,
-    pub palette: Option<Uint8ClampedArray>,
+    pub palettes: Option<Uint8ClampedArray>,
     pub background: Option<Uint8ClampedArray>,
 }
