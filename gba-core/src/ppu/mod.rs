@@ -157,8 +157,8 @@ impl Ppu {
                 let flip_vertical = tm_data.bit(11) == 1;
                 let flip_horizontal = tm_data.bit(10) == 1;
 
-                let mut subpixel_x = usize::from(background_x % 8);
-                let mut subpixel_y = usize::from(background_y % 8);
+                let mut subpixel_x: usize = (background_x % 8).into();
+                let mut subpixel_y: usize = (background_y % 8).into();
                 if flip_horizontal {
                     subpixel_x = 7 - subpixel_x;
                 }
@@ -166,7 +166,7 @@ impl Ppu {
                     subpixel_y = 7 - subpixel_y;
                 }
 
-                let ts_index: usize = usize::from(tm_data.bits(0, 9));
+                let ts_index: usize = tm_data.bits(0, 9).into();
                 let ts_byte = self.vram
                     [character_base_block + 32 * ts_index + 4 * subpixel_y + subpixel_x / 2];
 

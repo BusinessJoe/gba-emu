@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { gbaStore } from "$lib/gbaStore";
+	import { DISPLAYS } from "$lib/debuggerStore";
+	import { onMount } from "svelte";
 
     export let palette: number;
     export let use_256_colors: boolean;
 
-    let gba = $gbaStore;
     let tiles_canvas: HTMLCanvasElement;
 
     $: ctx = tiles_canvas?.getContext('2d');
@@ -12,12 +12,18 @@
     const width = 32 * 8;
     const height = 32 * 8;
 
-    $: {
-        if (ctx && gba) {
-            const palette16 = use_256_colors ? undefined : palette;
-            //$gba.gba.draw_tiles(ctx, palette16);
+    let rid: number;
+    function refresh() {
+        if (ctx) {
+            let imageData = new ImageData(DISPLAYS.tiles, 32 * 8);
+            ctx.putImageData(imageData, 0, 0);
         }
+        rid = requestAnimationFrame(refresh);
     }
+    onMount(() => {
+        rid = requestAnimationFrame(refresh);
+        return () => cancelAnimationFrame(rid);
+    });
 </script>
 
 <canvas
