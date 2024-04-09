@@ -55,23 +55,7 @@
         <input type="radio" bind:group={ppu_panel} value={"backgrounds"}>
         Backgrounds
     </label>
-    {#if ppu_panel === "tilemaps"}
-        <div>
-            Tilemaps?? What are these
-            <div>
-                <Tilemap bg={0} />
-            </div>
-            <div>
-                <Tilemap bg={1} />
-            </div>
-            <div>
-                <Tilemap bg={2} />
-            </div>
-            <div>
-                <Tilemap bg={3} />
-            </div>
-        </div>
-    {:else if ppu_panel === "tiles"}
+    {#if ppu_panel === "tiles"}
         <div>
             <h2>
                 Tiles

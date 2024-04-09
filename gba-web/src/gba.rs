@@ -106,7 +106,6 @@ impl Gba {
                 }
                 Response::CpuDebugInfo(info) => {}
                 Response::TileData(tiles) => {
-                    console::log_1(&format!("{} tiles", tiles.len()).into());
                     // Hardcoded 64 * 32 tile canvas.
                     // Each tile is 8 * 8 pixels with 4 bytes per pixel.
                     let mut js_screen_data: Vec<u8> = vec![0; 64 * 32 * 8 * 8 * 4];
