@@ -3,6 +3,7 @@
 	import BackgroundsCanvas from "./BackgroundsCanvas.svelte";
 	import PalettesCanvas from "./PalettesCanvas.svelte";
 	import TilesCanvas from "./TilesCanvas.svelte";
+    import { runPeriodically, clearRunPeriodically } from "$lib/utils";
 
 	import { gbaStore } from "$lib/gbaStore";
 	import { onMount } from "svelte";
@@ -29,11 +30,10 @@
         if (ppu_panel == "tiles") {
             refresh_tiles();
         }
-        rid = requestAnimationFrame(refresh);
     }
     onMount(() => {
-        rid = requestAnimationFrame(refresh);
-        return () => cancelAnimationFrame(rid);
+        let id = runPeriodically(refresh, 60);
+        return () => clearRunPeriodically(id);
     });
 
 </script>

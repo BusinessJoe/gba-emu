@@ -3,6 +3,7 @@
 	import { gbaStore } from '$lib/gbaStore';
     import { debuggerStore, updateDebuggerData } from '$lib/debuggerStore';
 	import { onMount } from 'svelte';
+	import { runPeriodically, clearRunPeriodically } from '$lib/utils';
 
     async function init() {
         console.log('Running init()');
@@ -23,12 +24,12 @@
         if (gba) {
             updateDebuggerData(gba);
         }
-        rid = requestAnimationFrame(tickGba);
     }
 
 	onMount(() => {
         init().then(() => {
-            rid = requestAnimationFrame(tickGba);
+            rid = runPeriodically(tickGba, 60);
         });
+        return () => clearRunPeriodically(rid);
 	});
 </script>

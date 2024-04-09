@@ -69,6 +69,10 @@ impl Gba {
 
     pub fn set_display(&mut self, name: &str, array: Uint8ClampedArray) -> Result<(), JsValue> {
         match name {
+            "screen" => {
+                self.displays.screen = Some(array);
+                Ok(())
+            }
             "tiles" => {
                 self.displays.tiles = Some(array);
                 Ok(())
@@ -98,7 +102,7 @@ impl Gba {
                 Response::ScreenData(screen_data) => {
                     let js_screen_data: Vec<u8> = screen_data
                         .chunks_exact(3)
-                        .flat_map(|chunk| [chunk[0], chunk[1], chunk[2], 255])
+                        .flat_map(|rgb| [rgb[0], rgb[1], rgb[2], 255])
                         .collect();
                     if let Some(screen) = &mut self.displays.screen {
                         screen.copy_from(&js_screen_data);
