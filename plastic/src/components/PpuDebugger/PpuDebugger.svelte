@@ -5,6 +5,7 @@
 	import TilesCanvas from "./TilesCanvas.svelte";
 
 	import { gbaStore } from "$lib/gbaStore";
+	import { onMount } from "svelte";
 
     let gba = $gbaStore;
     let ppu_panel: string = "tilemaps";
@@ -17,6 +18,23 @@
     //let bg_mode = $gba?.gba.background_mode();
     let bg_mode = 0;
 
+    // Refresh ppu debug data every frame
+    let rid: number;
+    function refresh_tiles() {
+        if (gba) {
+            gba.request_tiles(use_256_colors ? undefined : palette);
+        }
+    }
+    function refresh() {
+        if (ppu_panel == "tiles") {
+            refresh_tiles();
+        }
+        rid = requestAnimationFrame(refresh);
+    }
+    onMount(() => {
+        rid = requestAnimationFrame(refresh);
+        return () => cancelAnimationFrame(rid);
+    });
 
 </script>
 

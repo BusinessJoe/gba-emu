@@ -71,6 +71,38 @@ impl Ppu {
     }
 }
 
+/// The good impl block :)
+impl GbaCore {
+    /// Return a vector of tiles, colored according the the provided palette,
+    /// or using 256 color mode if palette is None.
+    pub fn get_tiles(
+        &self, palette: Option<usize>
+    ) -> Vec<Vec<[u8; 3]>> {
+        // Tiles containing offsets into palettes, to be turned into rgb tuples
+        let offset_tiles = self.bus.ppu.debug_tiles(palette.is_none());
+
+        let mut row = 0;
+        let mut col = 0;
+
+        let decode_tile = |tile: Tile| {
+            if let Some(palette) = palette {
+                tile.palette_offsets
+                    .iter()
+                    .map(|&offset| self.bus.ppu.palette_lookup_16(palette, offset.into()))
+                    .collect()
+            } else {
+                tile.palette_offsets
+                    .iter()
+                    .map(|&offset| self.bus.ppu.palette_lookup_256(offset.into()))
+                    .collect()
+            }
+        };
+
+        offset_tiles.into_iter().map(decode_tile).collect()
+    }
+}
+
+/// Heresy, will be smote >:(
 #[cfg(feature = "debugger")]
 #[cfg_attr(feature="wasm", wasm_bindgen)]
 impl GbaCore {
@@ -85,7 +117,7 @@ impl GbaCore {
         let mut bytes: Vec<u8> = vec![];
         for palette in 0..16 {
             for offset in 0..16 {
-                let color = self.decode_16(palette, offset);
+                let color = self.decode_16_alpha(palette, offset);
                 bytes.push(color[0]);
                 bytes.push(color[1]);
                 bytes.push(color[2]);
@@ -100,17 +132,22 @@ impl GbaCore {
         Ok(())
     }
 
-    fn decode_16(&self, palette16: usize, offset: u8) -> [u8; 4] {
+    fn decode_16(&self, palette16: usize, offset: u8) -> [u8; 3] {
+        self.bus.ppu.palette_lookup_16(palette16, offset.into())
+    }
+
+    fn decode_16_alpha(&self, palette16: usize, offset: u8) -> [u8; 4] {
         let color = self.bus.ppu.palette_lookup_16(palette16, offset.into());
         let alpha = if offset == 0 { 0 } else { 255 };
         [color[0], color[1], color[2], alpha]
     }
 
-    fn decode_256(&self, offset: u8) -> [u8; 4] {
+    fn decode_256_alpha(&self, offset: u8) -> [u8; 4] {
         let color = self.bus.ppu.palette_lookup_256(offset.into());
         let alpha = if offset == 0 { 0 } else { 255 };
         [color[0], color[1], color[2], alpha]
     }
+
 
     pub fn draw_tiles(
         &self,
@@ -129,12 +166,12 @@ impl GbaCore {
             let unclamped_data: Vec<u8> = if let Some(palette16) = palette16 {
                 tile.palette_offsets
                     .iter()
-                    .flat_map(|&offset| self.decode_16(palette16, offset))
+                    .flat_map(|&offset| self.decode_16_alpha(palette16, offset))
                     .collect()
             } else {
                 tile.palette_offsets
                     .iter()
-                    .flat_map(|&offset| self.decode_256(offset))
+                    .flat_map(|&offset| self.decode_256_alpha(offset))
                     .collect()
             };
 

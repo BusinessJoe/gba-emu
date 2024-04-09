@@ -7,19 +7,19 @@ use web_sys::{console, WorkerGlobalScope};
 
 use crate::cpu_debug::CpuDebugInfo;
 use crate::to_js_result::{ToJsResult, OptionToJsResult};
-use crate::control::{Event, ControlState, Response};
+use crate::control::{Request, ControlState, Response};
 
 pub struct GbaThread {
     gba: GbaCore,
 
     tx: Sender<Response>,
-    rx: Receiver<Event>,
+    rx: Receiver<Request>,
 
     control_state: ControlState,
 }
 
 impl GbaThread {
-    pub fn new(tx: Sender<Response>, rx: Receiver<Event>) -> Self {
+    pub fn new(tx: Sender<Response>, rx: Receiver<Request>) -> Self {
 
         // Emulator instance
         let gba = GbaCore::default();
@@ -41,31 +41,37 @@ impl GbaThread {
         
         let ticks = 100000;
 
-        let mut screen_render = false;
-        let mut cpu_debug_info = false;
-
         self.gba.load_test_rom();
         self.gba.skip_bios();
 
         loop {
             for event in self.rx.try_iter() {
                 match event {
-                    Event::ControlEvent(event) => {
+                    Request::ControlEvent(event) => {
                         self.control_state.update(event);
                     }
-                    Event::LoadRom(rom) => {
+                    Request::LoadRom(rom) => {
                         self.gba = GbaCore::default();
                         self.gba.load_rom(&rom);
                         self.gba.skip_bios();
                     }
-                    Event::ScreenData => {
-                        screen_render = true;
-                    }
-                    Event::CpuDebugInfo => {
-                        cpu_debug_info = true; 
-                    }
-                    Event::KeyEvent { key, pressed } => {
+                    Request::KeyEvent { key, pressed } => {
                         self.gba.set_key(key, pressed);
+                    }
+                    Request::ScreenData => {
+                        let data = self.gba.screen();
+                        self.tx.send(Response::ScreenData(data)).to_js_result()?;
+                    }
+                    Request::CpuDebugInfo => {
+                        let pc = self.gba.pc();
+                        let info = CpuDebugInfo {
+                            pc
+                        };
+                        self.tx.send(Response::CpuDebugInfo(info)).to_js_result()?;
+                    }
+                    Request::Tiles { palette } => {
+                        let tiles = self.gba.get_tiles(palette);
+                        self.tx.send(Response::TileData(tiles));
                     }
                 }
             }
@@ -75,20 +81,6 @@ impl GbaThread {
             }
 
             self.gba.tick_multiple(ticks);
-
-            if screen_render {
-                screen_render = false;
-                let data = self.gba.screen();
-                self.tx.send(Response::ScreenData(data)).to_js_result()?;
-            }
-            if cpu_debug_info {
-                cpu_debug_info = false;
-                let pc = self.gba.pc();
-                let info = CpuDebugInfo {
-                    pc
-                };
-                self.tx.send(Response::CpuDebugInfo(info)).to_js_result()?;
-            }
         }
     }
 }

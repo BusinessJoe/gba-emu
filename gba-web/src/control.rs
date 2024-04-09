@@ -3,12 +3,13 @@ use gba_core::Key;
 use crate::cpu_debug::CpuDebugInfo;
 
 /// Events from controller to GBA thread
-pub enum Event {
+pub enum Request {
     ControlEvent(ControlEvent),
     LoadRom(Vec<u8>),
     ScreenData,
     CpuDebugInfo,
     KeyEvent{key: Key, pressed: bool},
+    Tiles{ palette: Option<usize> },
 }
 
 pub enum ControlEvent {
@@ -37,9 +38,14 @@ impl ControlState {
     }
 }
 
+/// Stores the colors of a single tile.
+type Tile = Vec<[u8; 3]>;
+
 /// Responses from GBA thread to controller
 pub enum Response {
     ScreenData(Vec<u8>),
     CpuDebugInfo(CpuDebugInfo),
+    /// All the current tiles
+    TileData(Vec<Tile>),
 }
 

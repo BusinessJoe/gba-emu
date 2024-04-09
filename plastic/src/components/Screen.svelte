@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { debuggerStore } from "$lib/debuggerStore";
+    import { debuggerStore, DISPLAYS } from "$lib/debuggerStore";
 	import { onMount } from "svelte";
 
     let screen_canvas: HTMLCanvasElement | undefined;
@@ -13,7 +13,7 @@
         }
 
         let rid = requestAnimationFrame(function update() {
-            let imageData = new ImageData(debuggerData.screen_array, 240);
+            let imageData = new ImageData(DISPLAYS.screen, 240);
             ctx.putImageData(imageData, 0, 0);
 
             rid = requestAnimationFrame(update);
