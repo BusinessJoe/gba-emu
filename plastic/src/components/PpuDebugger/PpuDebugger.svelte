@@ -9,7 +9,7 @@
 	import { onMount } from "svelte";
 
     let gba = $gbaStore;
-    let ppu_panel: string = "tilemaps";
+    let ppu_panel: string = "background";
 
     let palette: number = 0;
     let use_256_colors: boolean = false;
@@ -30,11 +30,18 @@
             gba.request_palettes();
         }
     }
+    function refresh_background() {
+        if (gba) {
+            gba.request_background(background);
+        }
+    }
     function refresh() {
         if (ppu_panel == "tiles") {
             refresh_tiles();
         } else if (ppu_panel == "palettes") {
             refresh_palettes();
+        } else if (ppu_panel == "background") {
+            refresh_background();
         }
     }
     onMount(() => {
@@ -54,8 +61,8 @@
         Palettes
     </label>
     <label>
-        <input type="radio" bind:group={ppu_panel} value={"backgrounds"}>
-        Backgrounds
+        <input type="radio" bind:group={ppu_panel} value={"background"}>
+        Background
     </label>
     {#if ppu_panel === "tiles"}
         <div>
@@ -74,15 +81,14 @@
         </div>
     {:else if ppu_panel === "palettes"}
         <div>
+            <h2>
+                Palettes
+            </h2>
             <PalettesCanvas />
         </div>
-    {:else if ppu_panel === "backgrounds"}
+    {:else if ppu_panel === "background"}
         <div>
             <h2>Background</h2>
-            <div>
-                <span>BG Mode:</span>
-                <span>{bg_mode}</span>
-            </div>
             <label>
                 Background
                 <input type="number" min=0 max=3 bind:value={background}>
