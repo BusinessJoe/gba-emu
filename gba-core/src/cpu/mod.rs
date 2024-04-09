@@ -6,7 +6,6 @@ use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
-use web_sys::console;
 
 use crate::bus::Bus;
 use crate::utils::AddressableBits;
@@ -255,7 +254,6 @@ impl Cpu {
 
         if !self.old_interrupt && new_interrupt {
             self.handle_interrupt();
-            console::log_1(&format!("handling interrupt {:b}", ie_flag & if_flag).into());
         }
         self.old_interrupt = new_interrupt;
 
