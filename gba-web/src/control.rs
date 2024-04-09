@@ -10,6 +10,8 @@ pub enum Request {
     CpuDebugInfo,
     KeyEvent{key: Key, pressed: bool},
     Tiles{ palette: Option<usize> },
+    /// Palette data for all 16 palettes
+    Palettes,
 }
 
 pub enum ControlEvent {
@@ -47,5 +49,7 @@ pub enum Response {
     CpuDebugInfo(CpuDebugInfo),
     /// All the current tiles
     TileData(Vec<Tile>),
+    /// Colors of each palette; 16 palettes with 16 colors each.
+    PaletteData(Vec<Vec<[u8; 3]>>),
 }
 

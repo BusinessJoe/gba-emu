@@ -71,15 +71,17 @@ impl Gba {
         match name {
             "screen" => {
                 self.displays.screen = Some(array);
-                Ok(())
             }
             "tiles" => {
                 self.displays.tiles = Some(array);
-                Ok(())
             }
-            _ => Err("Invalid display name".into())
+            "palettes" => {
+                self.displays.palettes = Some(array);
+            }
+            _ => return Err("Invalid display name".into())
         }
-
+        console::log_1(&format!("Set display for '{}'", name).into());
+        Ok(())
     }
 
     pub fn request_screen_draw(&self) -> Result<(), JsValue> {
@@ -93,6 +95,12 @@ impl Gba {
     pub fn request_tiles(&self, palette: Option<usize>) -> Result<(), JsValue> {
         self.tx
             .send(Request::Tiles { palette })
+            .to_js_result()
+    }
+
+    pub fn request_palettes(&self) -> Result<(), JsValue> {
+        self.tx
+            .send(Request::Palettes)
             .to_js_result()
     }
 
@@ -128,6 +136,16 @@ impl Gba {
 
 
                     if let Some(screen) = &mut self.displays.tiles {
+                        screen.copy_from(&js_screen_data);
+                    }
+                }
+                Response::PaletteData(palette_data) => {
+                    let js_screen_data: Vec<u8> = palette_data
+                        .iter()
+                        .flatten()
+                        .flat_map(|&[r,g,b]| [r, g, b, 255])
+                        .collect();
+                    if let Some(screen) = &mut self.displays.palettes {
                         screen.copy_from(&js_screen_data);
                     }
                 }

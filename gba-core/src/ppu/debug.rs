@@ -81,9 +81,6 @@ impl GbaCore {
         // Tiles containing offsets into palettes, to be turned into rgb tuples
         let offset_tiles = self.bus.ppu.debug_tiles(palette.is_none());
 
-        let mut row = 0;
-        let mut col = 0;
-
         let decode_tile = |tile: Tile| {
             if let Some(palette) = palette {
                 tile.palette_offsets
@@ -99,6 +96,20 @@ impl GbaCore {
         };
 
         offset_tiles.into_iter().map(decode_tile).collect()
+    }
+
+    /// Return a vector of 16 palettes, each being a vector of 16 rgb triples.
+    pub fn get_palettes(&self) -> Vec<Vec<[u8; 3]>> {
+        let mut palettes = vec![];
+        for palette in 0..16 {
+            let mut colors: Vec<[u8; 3]> = vec![];
+            for offset in 0..16 {
+                let color = self.decode_16(palette, offset);
+                colors.push(color);
+            }
+            palettes.push(colors)
+        }
+        palettes
     }
 }
 
