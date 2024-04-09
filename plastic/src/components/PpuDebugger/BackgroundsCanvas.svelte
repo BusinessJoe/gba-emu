@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { gbaStore } from "$lib/gbaStore";
+    import { debuggerStore } from "$lib/debuggerStore";
 
     export let background: number;
 
@@ -7,26 +8,47 @@
     let gba = $gbaStore;
 
     $: ctx = canvas?.getContext('2d');
-    //let background_info = $gba?.gba.background_info(background);
-    let background_info = "background_info";
+    $: background_info = [
+        $debuggerStore.ppu.background_0,
+        $debuggerStore.ppu.background_1,
+        $debuggerStore.ppu.background_2,
+        $debuggerStore.ppu.background_3
+    ][background];
 
-    $: {
-        console.log(background_info);
-    }
-
-    const width = 16;
-    const height = 16;
+    const width = 256;
+    const height = 256;
 
 </script>
 
-<!--
 <div>
-    Priority: {background_info?.priority}<br>
-    Character base block: {background_info?.character_base_block}<br>
-    Mosaic: {background_info?.mosaic}<br>
-    Use 256 colors: {background_info?.use_256_colors}<br>
-    Screen base block: {background_info?.screen_base_block}<br>
-    Wraparound: {background_info?.wraparound}<br>
-    Screen size: {background_info?.screen_size}
+    BG Mode: {$debuggerStore.ppu.bg_mode}
 </div>
--->
+
+<div>
+    Priority: {background_info.priority}<br>
+    Character base block: {background_info.tile_base}<br>
+    Mosaic: {background_info.mosaic}<br>
+    Use 256 colors: {background_info.use_256_colors}<br>
+    Screen base block: {background_info.map_base}<br>
+    Wraparound: {background_info.wraparound}<br>
+    Screen size: {background_info.size_0}x{background_info.size_1}
+</div>
+
+<canvas
+    class="background-canvas"
+    bind:this={canvas}
+    style="image-rendering: pixelated; 
+        --width: {width};
+        --height: {height};
+        "
+    width={width}
+    height={height}
+/>
+
+<style>
+    .background-canvas {
+        width: calc(2px * var(--width));
+        height: calc(2px * var(--height));
+        padding: 0.5em;
+    }
+</style>

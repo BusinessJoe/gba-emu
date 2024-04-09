@@ -33,7 +33,7 @@
 </script>
 
 <canvas
-    class="palette-canvas"
+    class="palettes-canvas"
     bind:this={canvas}
     style="image-rendering: pixelated; 
         --width: {width};
@@ -44,9 +44,9 @@
 />
 
 <style>
-    .palette-canvas {
-        width: calc(8px * var(--width));
-        height: calc(8px * var(--height));
+    .palettes-canvas {
+        width: calc(20px * var(--width));
+        height: calc(20px * var(--height));
         padding: 0.5em;
     }
 </style>

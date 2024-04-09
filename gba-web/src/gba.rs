@@ -1,4 +1,5 @@
 use gba_core::Key;
+use std::arch::wasm32::unreachable;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 
@@ -8,7 +9,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 
 use crate::control::{ControlEvent, Request, Response};
-use crate::debugger::{DebuggerDisplays, DebuggerState};
+use crate::debugger::{BackgroundsState, DebuggerDisplays, DebuggerState};
 use crate::thread::GbaThread;
 use crate::to_js_result::ToJsResult;
 
@@ -78,7 +79,10 @@ impl Gba {
             "palettes" => {
                 self.displays.palettes = Some(array);
             }
-            _ => return Err("Invalid display name".into())
+            "background" => {
+                self.displays.background = Some(array);
+            }
+            _ => return Err("Invalid display name".into()),
         }
         console::log_1(&format!("Set display for '{}'", name).into());
         Ok(())
@@ -93,15 +97,15 @@ impl Gba {
     }
 
     pub fn request_tiles(&self, palette: Option<usize>) -> Result<(), JsValue> {
-        self.tx
-            .send(Request::Tiles { palette })
-            .to_js_result()
+        self.tx.send(Request::Tiles { palette }).to_js_result()
     }
 
     pub fn request_palettes(&self) -> Result<(), JsValue> {
-        self.tx
-            .send(Request::Palettes)
-            .to_js_result()
+        self.tx.send(Request::Palettes).to_js_result()
+    }
+
+    pub fn request_background(&self, bg: usize) -> Result<(), JsValue> {
+        self.tx.send(Request::Background { bg }).to_js_result()
     }
 
     pub fn process_responses(&mut self) -> Result<(), JsValue> {
@@ -126,14 +130,17 @@ impl Gba {
                         for (meta_col_idx, tile) in meta_row.iter().enumerate() {
                             for (sub_row_idx, pixel_row) in tile.chunks(8).enumerate() {
                                 let row_idx = meta_row_idx * 8 + sub_row_idx;
-                                let pixel_row_flat: Vec<u8> = pixel_row.into_iter().flat_map(|&[r, g, b]| [r, g, b, 255]).collect();
+                                let pixel_row_flat: Vec<u8> = pixel_row
+                                    .into_iter()
+                                    .flat_map(|&[r, g, b]| [r, g, b, 255])
+                                    .collect();
                                 let start_pixel: usize = row_idx * 32 * 8 + meta_col_idx * 8;
                                 // Each row of pixels is 8 pixel * 4 bytes/pixel = 32 bytes
-                                js_screen_data[start_pixel * 4..start_pixel * 4 + 32].copy_from_slice(&pixel_row_flat);
+                                js_screen_data[start_pixel * 4..start_pixel * 4 + 32]
+                                    .copy_from_slice(&pixel_row_flat);
                             }
                         }
                     }
-
 
                     if let Some(screen) = &mut self.displays.tiles {
                         screen.copy_from(&js_screen_data);
@@ -143,11 +150,26 @@ impl Gba {
                     let js_screen_data: Vec<u8> = palette_data
                         .iter()
                         .flatten()
-                        .flat_map(|&[r,g,b]| [r, g, b, 255])
+                        .flat_map(|&[r, g, b]| [r, g, b, 255])
                         .collect();
                     if let Some(screen) = &mut self.displays.palettes {
                         screen.copy_from(&js_screen_data);
                     }
+                }
+                Response::BackgroundData {
+                    bg,
+                    bg_mode,
+                    data,
+                } => {
+                    self.debugger_state.ppu.bg_mode = bg_mode;
+                    let bg_ref = match bg {
+                        0 => &mut self.debugger_state.ppu.background_0,
+                        1 => &mut self.debugger_state.ppu.background_1,
+                        2 => &mut self.debugger_state.ppu.background_2,
+                        3 => &mut self.debugger_state.ppu.background_3,
+                        _ => unreachable!("The background number from our thread should always be between 0 and 3"),
+                    };
+                    *bg_ref = data;
                 }
             }
         }

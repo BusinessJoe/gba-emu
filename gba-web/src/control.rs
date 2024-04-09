@@ -1,6 +1,6 @@
 use gba_core::Key;
 
-use crate::cpu_debug::CpuDebugInfo;
+use crate::{cpu_debug::CpuDebugInfo, debugger::BackgroundsState};
 
 /// Events from controller to GBA thread
 pub enum Request {
@@ -9,9 +9,12 @@ pub enum Request {
     ScreenData,
     CpuDebugInfo,
     KeyEvent{key: Key, pressed: bool},
+    /// Tile display with specified palette, or in 256 color mode
     Tiles{ palette: Option<usize> },
-    /// Palette data for all 16 palettes
+    /// Palette display for all 16 palettes
     Palettes,
+    /// Background data and display
+    Background { bg: usize }
 }
 
 pub enum ControlEvent {
@@ -51,5 +54,11 @@ pub enum Response {
     TileData(Vec<Tile>),
     /// Colors of each palette; 16 palettes with 16 colors each.
     PaletteData(Vec<Vec<[u8; 3]>>),
+    BackgroundData { 
+        /// The background this data belongs to
+        bg: usize,
+        bg_mode: u8,
+        data: BackgroundsState,
+    },
 }
 
