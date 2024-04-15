@@ -1,15 +1,14 @@
-use std::arch::wasm32::unreachable;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Receiver, Sender};
 
 use gba_core::GbaCore;
 
 use wasm_bindgen::prelude::*;
-use web_sys::{console, WorkerGlobalScope};
+use web_sys::console;
 
+use crate::control::{ControlState, Request, Response};
 use crate::cpu_debug::CpuDebugInfo;
 use crate::debugger::BackgroundsState;
-use crate::to_js_result::{ToJsResult, OptionToJsResult};
-use crate::control::{Request, ControlState, Response};
+use crate::to_js_result::ToJsResult;
 
 pub struct GbaThread {
     gba: GbaCore,
@@ -22,14 +21,13 @@ pub struct GbaThread {
 
 impl GbaThread {
     pub fn new(tx: Sender<Response>, rx: Receiver<Request>) -> Self {
-
         // Emulator instance
         let gba = GbaCore::default();
         console::log_1(&"Constructed a Gba".into());
 
         Self {
             gba,
-            tx, 
+            tx,
             rx,
             control_state: ControlState::new(),
         }
@@ -38,9 +36,9 @@ impl GbaThread {
     pub fn start(&mut self) -> Result<(), JsValue> {
         // let worker = worker_global_scope()?;
         // let performance = worker
-                // .performance()
-                // .to_js_result("performance should be available")?;
-        
+        // .performance()
+        // .to_js_result("performance should be available")?;
+
         let ticks = 100000;
 
         self.gba.load_test_rom();
@@ -66,9 +64,7 @@ impl GbaThread {
                     }
                     Request::CpuDebugInfo => {
                         let pc = self.gba.pc();
-                        let info = CpuDebugInfo {
-                            pc
-                        };
+                        let info = CpuDebugInfo { pc };
                         self.tx.send(Response::CpuDebugInfo(info)).to_js_result()?;
                     }
                     Request::Tiles { palette } => {
@@ -100,7 +96,11 @@ impl GbaThread {
                         let mut display: Vec<[u8; 3]> = vec![[0, 0, 0]; size.0 * size.1];
                         for y in 0..size.0 {
                             for x in 0..size.1 {
-                                display[x * size.1 + y] = self.gba.get_background_pixel(x, y, bg)
+                                display[x * size.1 + y] = self.gba.get_background_pixel(
+                                    x.try_into().unwrap(),
+                                    y.try_into().unwrap(),
+                                    bg,
+                                )
                             }
                         }
 
@@ -112,7 +112,7 @@ impl GbaThread {
                                 mosaic: bg_info.mosaic,
                                 use_256_colors: bg_info.use_256_colors,
                                 map_base: bg_info.screen_base_block, // TODO: add address offset
-                                tile_base: bg_info.character_base_block,  // TODO: same as above
+                                tile_base: bg_info.character_base_block, // TODO: same as above
                                 wraparound: false,
                                 size_0: size.0,
                                 size_1: size.1,
@@ -125,7 +125,7 @@ impl GbaThread {
                     }
                 }
             }
-             
+
             if self.control_state.pause {
                 continue;
             }
@@ -134,7 +134,6 @@ impl GbaThread {
         }
     }
 }
-
 
 /*
 fn worker_global_scope() -> Result<WorkerGlobalScope, JsValue> {
