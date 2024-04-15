@@ -212,10 +212,15 @@ impl Ppu {
     }
 
     fn get_bg(&self) -> usize {
-        [0usize, 1, 2, 3].into_iter().min_by_key(|&bg| {
+        [0usize, 1, 2, 3].into_iter().filter(|bg| {
+            // display_enable bit from DISPCNT takes up bits 8 to 11 for bgs 0 to 3
+            let display_enable = (self.lcd_regs.dispcnt.read() >> (bg + 8)) & 1 == 1;
+            display_enable
+        }).min_by_key(|&bg| {
             let bg_cnt = self.lcd_regs.bgcnt[bg].read();
             bg_cnt & 0b11
-        }).expect("Iterator is never empty")
+        }).unwrap_or(0)
+        // TODO: find behaviour when all backgrounds are disabled
     }
 
     fn get_pixel(&self) -> [u8; 3] {

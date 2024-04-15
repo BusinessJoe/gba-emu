@@ -97,6 +97,13 @@ impl GbaThread {
                             _ => unreachable!("Screen size is always from 0 to 3"),
                         };
 
+                        let mut display: Vec<[u8; 3]> = vec![[0, 0, 0]; size.0 * size.1];
+                        for y in 0..size.0 {
+                            for x in 0..size.1 {
+                                display[x * size.1 + y] = self.gba.get_background_pixel(x, y, bg)
+                            }
+                        }
+
                         let response = Response::BackgroundData {
                             bg,
                             bg_mode,
@@ -111,7 +118,8 @@ impl GbaThread {
                                 size_1: size.1,
                                 offset_0: 0,
                                 offset_1: 0,
-                            }
+                            },
+                            display,
                         };
                         self.tx.send(response);
                     }

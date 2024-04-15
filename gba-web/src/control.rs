@@ -59,6 +59,7 @@ pub enum Response {
         bg: usize,
         bg_mode: u8,
         data: BackgroundsState,
+        display: Vec<[u8; 3]>,
     },
 }
 
