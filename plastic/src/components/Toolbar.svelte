@@ -83,7 +83,7 @@
     #toolbar {
         width: 100%;
         height: 100px;
-        background-color: purple;
+        background-color: #295379;
         color: white;
     }
 </style>
