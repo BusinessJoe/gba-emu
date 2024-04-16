@@ -103,7 +103,7 @@ impl GbaThread {
                                 )
                             }
                         }
-
+                      
                         let response = Response::BackgroundData {
                             bg,
                             bg_mode,
