@@ -187,7 +187,7 @@
 		width: 500px;
 		overflow: hidden;
         background-color: white;
-        height: 100%;
+        max-height: 100vh;
 	}
 
     .instruction-mode-label {

@@ -21,7 +21,7 @@
 <GbaTicker />
 <Toolbar bind:clockSpeed />
 <div id="main">
-	<div>
+	<div id="left-panel">
 		<div id="left-panel-select">
 			<label>
 				<input
@@ -44,11 +44,13 @@
 				PPU
 			</label>
 		</div>
-		{#if leftPanel === 'instructions'}
-			<Debugger />
-		{:else if leftPanel === 'ppu'}
-			<PpuDebugger />
-		{/if}
+        <div id="left-panel-content">
+            {#if leftPanel === 'instructions'}
+                <Debugger />
+            {:else if leftPanel === 'ppu'}
+                <PpuDebugger />
+            {/if}
+        </div>
 	</div>
 	<div class="column">
 		<div>
@@ -114,4 +116,14 @@
 		display: flex;
 		flex-direction: row;
 	}
+
+    #left-panel {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #left-panel-content {
+        flex-grow: 1;
+        overflow: hidden;
+    }
 </style>
