@@ -160,6 +160,7 @@ impl Gba {
                     bg,
                     bg_mode,
                     data,
+                    display,
                 } => {
                     self.debugger_state.ppu.bg_mode = bg_mode;
                     let bg_ref = match bg {

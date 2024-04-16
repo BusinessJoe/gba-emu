@@ -4,7 +4,6 @@ pub use io_map::Key;
 pub use io_map::{Interrupt, IoMap};
 use num_traits::{AsPrimitive, FromBytes, ToBytes, Zero};
 use wasm_bindgen::prelude::wasm_bindgen;
-use js_sys;
 
 use crate::{
     cpu::Cpu,

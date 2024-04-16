@@ -1,3 +1,5 @@
+use std::cmp;
+
 mod dispstat;
 mod lcd_regs;
 mod masked_byte;
@@ -130,85 +132,113 @@ impl Ppu {
         self.lcd_regs.dispcnt.read().bits(0, 2) as u8
     }
 
+    fn get_bg_0_pixel(&self, x: u16, y: u16, bg: usize) -> [u8; 3] {
+        let bg_cnt = self.lcd_regs.bgcnt[bg].read();
+
+        let character_base_block = usize::from(bg_cnt.bits(2, 3)) * 0x4000;
+        let screen_base_block = usize::from(bg_cnt.bits(8, 12)) * 0x800;
+        let scroll_x: u16 = self.read_lcd_io_regs(0x4000010);
+        let scroll_y: u16 = self.read_lcd_io_regs(0x4000012);
+
+        let background_x = x + scroll_x;
+        let background_y = y + scroll_y;
+
+        let mut tile_x = background_x / 8;
+        let mut tile_y = background_y / 8;
+        let screenblock = self.reg_screenblock(tile_x.into(), tile_y.into());
+        tile_x %= 32;
+        tile_y %= 32;
+
+        let tile_index = usize::from(tile_x + tile_y * 32);
+        let tm_data = u16::from_le_bytes([
+            self.vram[screen_base_block + 0x800 * screenblock + tile_index * 2],
+            self.vram[screen_base_block + 0x800 * screenblock + tile_index * 2 + 1],
+        ]);
+
+        let flip_vertical = tm_data.bit(11) == 1;
+        let flip_horizontal = tm_data.bit(10) == 1;
+
+        let mut subpixel_x: usize = (background_x % 8).into();
+        let mut subpixel_y: usize = (background_y % 8).into();
+        if flip_horizontal {
+            subpixel_x = 7 - subpixel_x;
+        }
+        if flip_vertical {
+            subpixel_y = 7 - subpixel_y;
+        }
+
+        let ts_index: usize = tm_data.bits(0, 9).into();
+        let ts_byte = self.vram
+            [character_base_block + 32 * ts_index + 4 * subpixel_y + subpixel_x / 2];
+
+        let palette_offset = if subpixel_x % 2 == 0 {
+            ts_byte.bits(0, 3)
+        } else {
+            ts_byte.bits(4, 7)
+        };
+
+        let palette_bank = tm_data.bits(12, 15);
+        let color = self.palette_lookup_16(palette_bank.into(), palette_offset.into());
+
+        color
+    }
+
+    fn get_bg_3_pixel(&self, x: u16, y: u16) -> [u8; 3] {
+        let pixel_index: usize =
+            usize::from(x + y * SCREEN_WIDTH);
+        let color = u16::from_le_bytes([
+            self.vram[2 * pixel_index],
+            self.vram[2 * pixel_index + 1],
+        ]);
+        decode_color(color)
+    }
+
+    fn get_bg_4_pixel(&self, x: u16, y: u16) -> [u8; 3] {
+        let pixel_index: usize =
+            usize::from(x + y * SCREEN_WIDTH);
+        let bg = if self.lcd_regs.dispcnt.read().bit(4) == 0 {
+            &self.vram[0..usize::from(SCREEN_AREA)]
+        } else {
+            &self.vram[usize::from(SCREEN_AREA)..usize::from(SCREEN_AREA) * 2]
+        };
+        let palette = &self.bg_obj_palette;
+
+        let palette_index = 2 * usize::from(bg[pixel_index]);
+        let color_lo = palette[palette_index];
+        let color_hi = palette[palette_index + 1];
+
+        let color = u16::from_le_bytes([color_lo, color_hi]);
+        decode_color(color)
+    }
+
+    fn get_bg(&self) -> usize {
+        [0usize, 1, 2, 3].into_iter().filter(|bg| {
+            // display_enable bit from DISPCNT takes up bits 8 to 11 for bgs 0 to 3
+            let display_enable = (self.lcd_regs.dispcnt.read() >> (bg + 8)) & 1 == 1;
+            display_enable
+        }).min_by_key(|&bg| {
+            let bg_cnt = self.lcd_regs.bgcnt[bg].read();
+            bg_cnt & 0b11
+        }).unwrap_or(0)
+        // TODO: find behaviour when all backgrounds are disabled
+    }
+
     fn get_pixel(&self) -> [u8; 3] {
+        let x = self.x;
+        let y = self.lcd_regs.vcount.read();
         match self.bg_mode() {
             0 => {
-                let bg0cnt: u16 = self.read_lcd_io_regs(0x4000008);
-                let character_base_block = usize::from(bg0cnt.bits(2, 3)) * 0x4000;
-                let screen_base_block = usize::from(bg0cnt.bits(8, 12)) * 0x800;
-                let scroll_x: u16 = self.read_lcd_io_regs(0x4000010);
-                let scroll_y: u16 = self.read_lcd_io_regs(0x4000012);
-
-                let background_x = self.x + scroll_x;
-                let background_y = self.lcd_regs.vcount.read() + scroll_y;
-
-                let mut tile_x = background_x / 8;
-                let mut tile_y = background_y / 8;
-                let screenblock = self.reg_screenblock(tile_x.into(), tile_y.into());
-                tile_x %= 32;
-                tile_y %= 32;
-
-                let tile_index = usize::from(tile_x + tile_y * 32);
-                let tm_data = u16::from_le_bytes([
-                    self.vram[screen_base_block + 0x800 * screenblock + tile_index * 2],
-                    self.vram[screen_base_block + 0x800 * screenblock + tile_index * 2 + 1],
-                ]);
-
-                let flip_vertical = tm_data.bit(11) == 1;
-                let flip_horizontal = tm_data.bit(10) == 1;
-
-                let mut subpixel_x: usize = (background_x % 8).into();
-                let mut subpixel_y: usize = (background_y % 8).into();
-                if flip_horizontal {
-                    subpixel_x = 7 - subpixel_x;
-                }
-                if flip_vertical {
-                    subpixel_y = 7 - subpixel_y;
-                }
-
-                let ts_index: usize = tm_data.bits(0, 9).into();
-                let ts_byte = self.vram
-                    [character_base_block + 32 * ts_index + 4 * subpixel_y + subpixel_x / 2];
-
-                let palette_offset = if subpixel_x % 2 == 0 {
-                    ts_byte.bits(0, 3)
-                } else {
-                    ts_byte.bits(4, 7)
-                };
-
-                let palette_bank = tm_data.bits(12, 15);
-                let color = self.palette_lookup_16(palette_bank.into(), palette_offset.into());
-
-                color
+                let bg = self.get_bg();
+                self.get_bg_0_pixel(x, y, bg)
             }
-            1 => [128, 128, 0],
-            2 => [0, 0, 255],
-            3 => {
-                let pixel_index: usize =
-                    usize::from(self.x + self.lcd_regs.vcount.read() * SCREEN_WIDTH);
-                let color = u16::from_le_bytes([
-                    self.vram[2 * pixel_index],
-                    self.vram[2 * pixel_index + 1],
-                ]);
-                decode_color(color)
+            1 => {
+                let bg = self.get_bg();
+                self.get_bg_0_pixel(x, y, bg)
             }
-            4 => {
-                let pixel_index: usize =
-                    usize::from(self.x + self.lcd_regs.vcount.read() * SCREEN_WIDTH);
-                let bg = if self.lcd_regs.dispcnt.read().bit(4) == 0 {
-                    &self.vram[0..usize::from(SCREEN_AREA)]
-                } else {
-                    &self.vram[usize::from(SCREEN_AREA)..usize::from(SCREEN_AREA) * 2]
-                };
-                let palette = &self.bg_obj_palette;
-
-                let palette_index = 2 * usize::from(bg[pixel_index]);
-                let color_lo = palette[palette_index];
-                let color_hi = palette[palette_index + 1];
-
-                let color = u16::from_le_bytes([color_lo, color_hi]);
-                decode_color(color)
-            }
+            2 => [0, 255, 0],
+            3 => self.get_bg_3_pixel(x, y),
+            4 => self.get_bg_4_pixel(x, y),
+            5 => self.get_bg_3_pixel(x, y),
             _ => [255, 255, 255],
         }
     }

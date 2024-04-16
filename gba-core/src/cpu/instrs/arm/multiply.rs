@@ -1,5 +1,3 @@
-use num_traits::{WrappingAdd, WrappingMul};
-
 use crate::{cpu::CPSR, utils::AddressableBits};
 
 use super::ArmInstruction;

@@ -55,7 +55,7 @@ impl IoMap {
     pub fn new() -> Self {
         Self {
             mock: [0; 0x400],
-            keyinput: 0xff,
+            keyinput: 0x3ff,
             ime: [0; 4],
             ie: [0; 2],
             irq_flags: [0; 2],

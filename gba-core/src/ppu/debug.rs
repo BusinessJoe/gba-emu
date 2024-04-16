@@ -1,6 +1,5 @@
 use crate::ppu::Ppu;
 use crate::GbaCore;
-use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::Clamped;
 
 /// A collection of colors that make up the 8x8 tile
@@ -53,9 +52,12 @@ impl Ppu {
         bytes
     }
 
+}
+
+impl Ppu {
     /// Returns a vector of the tiles stored in VRAM, interpreting their bytes based on the given
     /// parameters.
-    pub fn debug_tiles(&self, more_colors: bool) -> Vec<Tile> {
+    fn debug_tiles(&self, more_colors: bool) -> Vec<Tile> {
         let map_and_tiles = &self.vram[..=0xffff];
         if more_colors {
             map_and_tiles
@@ -69,6 +71,7 @@ impl Ppu {
                 .collect()
         }
     }
+
 }
 
 /// The good impl block :)
@@ -111,6 +114,14 @@ impl GbaCore {
         }
         palettes
     }
+
+    pub fn get_background_pixel(&self, x: u16, y: u16, bg: usize) -> [u8; 3] {
+        self.bus.ppu.get_bg_0_pixel(x, y, bg)
+    }
+
+    fn decode_16(&self, palette16: usize, offset: u8) -> [u8; 3] {
+        self.bus.ppu.palette_lookup_16(palette16, offset.into())
+    }
 }
 
 /// Heresy, will be smote >:(
@@ -141,10 +152,6 @@ impl GbaCore {
         ctx.put_image_data(&image_data, 0.0, 0.0)?;
 
         Ok(())
-    }
-
-    fn decode_16(&self, palette16: usize, offset: u8) -> [u8; 3] {
-        self.bus.ppu.palette_lookup_16(palette16, offset.into())
     }
 
     fn decode_16_alpha(&self, palette16: usize, offset: u8) -> [u8; 4] {
