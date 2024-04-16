@@ -70,7 +70,7 @@
 
 <style>
 	:global(body) {
-		background-color: #1e1f43;
+		background-color: #0e2a3a;
 		margin: 0;
 		height: 100vh;
 		display: flex;
