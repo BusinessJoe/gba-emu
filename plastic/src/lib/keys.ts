@@ -2,7 +2,7 @@ import { Gba, Key } from '$lib/pkg/gba_web';
 
 export const handleKey = (gba: Gba | undefined, event: KeyboardEvent, pressed: boolean) => {
 	const key = getKey(event);
-	if (key && gba) {
+	if (key !== undefined && gba) {
 		gba.set_key(key, pressed);
 	}
 };

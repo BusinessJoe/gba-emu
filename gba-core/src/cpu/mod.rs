@@ -246,6 +246,7 @@ impl Cpu {
             }
         }
 
+        // TODO: check if i can read these directly
         let ime_flag = bus.read_byte(0x4000208, self);
         let ie_flag = bus.read_half(0x4000200, self);
         let if_flag = bus.read_half(0x4000202, self);
