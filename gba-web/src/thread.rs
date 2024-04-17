@@ -1,11 +1,12 @@
 use std::sync::mpsc::{Receiver, Sender};
 
 use gba_core::GbaCore;
+use gba_core::{disassemble_arm, disassemble_thumb};
 
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 
-use crate::control::{ControlState, Request, Response};
+use crate::control::{ControlState, InstructionInfo, Request, Response};
 use crate::cpu_debug::CpuDebugInfo;
 use crate::debugger::BackgroundsState;
 use crate::to_js_result::ToJsResult;
@@ -120,6 +121,20 @@ impl GbaThread {
                                 offset_1: 0,
                             },
                             display,
+                        };
+                        self.tx.send(response);
+                    }
+                    Request::Instruction { addr } => {
+                        let opcode = self.gba.read_address(addr);
+                        let arm_dis = disassemble_arm(opcode);
+                        let thumb_dis = disassemble_thumb((opcode & 0xffff).try_into().unwrap());
+                        let response = Response::InstructionInfo {
+                            addr,
+                            info: InstructionInfo {
+                                value: opcode,
+                                arm_dis,
+                                thumb_dis,
+                            }
                         };
                         self.tx.send(response);
                     }

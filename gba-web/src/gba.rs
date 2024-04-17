@@ -1,5 +1,6 @@
 use gba_core::Key;
 use std::arch::wasm32::unreachable;
+use std::collections::HashMap;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 
@@ -8,8 +9,8 @@ use wasm_bindgen::prelude::*;
 
 use web_sys::console;
 
-use crate::control::{ControlEvent, Request, Response};
-use crate::debugger::{BackgroundsState, DebuggerDisplays, DebuggerState};
+use crate::control::{ControlEvent, InstructionInfo, Request, Response};
+use crate::debugger::{DebuggerDisplays, DebuggerState};
 use crate::thread::GbaThread;
 use crate::to_js_result::ToJsResult;
 
@@ -22,6 +23,7 @@ pub struct Gba {
     displays: DebuggerDisplays,
 
     debugger_state: DebuggerState,
+    instructions: HashMap<u32, InstructionInfo>,
 }
 
 #[wasm_bindgen]
@@ -47,6 +49,7 @@ impl Gba {
             rx: from_thread,
             displays: DebuggerDisplays::default(),
             debugger_state: DebuggerState::default(),
+            instructions: HashMap::new(),
         }
     }
 
@@ -106,6 +109,10 @@ impl Gba {
 
     pub fn request_background(&self, bg: usize) -> Result<(), JsValue> {
         self.tx.send(Request::Background { bg }).to_js_result()
+    }
+
+    pub fn request_instruction_info(&self, addr: u32) -> Result<(), JsValue> {
+        self.tx.send(Request::Instruction { addr }).to_js_result()
     }
 
     pub fn process_responses(&mut self) -> Result<(), JsValue> {
@@ -172,6 +179,9 @@ impl Gba {
                     };
                     *bg_ref = data;
                 }
+                Response::InstructionInfo { addr, info } => {
+                    self.instructions.insert(addr, info);
+                }
             }
         }
 
@@ -180,5 +190,9 @@ impl Gba {
 
     pub fn debugger_state(&self) -> DebuggerState {
         self.debugger_state.clone()
+    }
+
+    pub fn instruction_info(&self, addr: u32) -> Option<InstructionInfo> {
+        self.instructions.get(&addr).cloned()
     }
 }

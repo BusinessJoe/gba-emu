@@ -83,7 +83,7 @@ impl ShifterOperand {
         }
     }
 
-    fn parse_shift(instruction: u32) -> ShifterOperand {
+    fn parse_shift(instruction: u32) -> Result<ShifterOperand, &'static str> {
         let low_bit = (instruction >> 4) & 1;
         let shift_type_bits = (instruction >> 5) & 0b11;
         let rm = instruction & 0xf;
@@ -99,13 +99,13 @@ impl ShifterOperand {
 
             // TODO: Is this check necessary - maybe the format of instructions prevents this
             if shift_reg == 15 {
-                panic!("shift reg cannot be r15")
+                return Err("shift reg cannot be r15");
             }
 
             shift_source = ShiftSource::Register(shift_reg);
         };
 
-        match shift_type_bits {
+        Ok(match shift_type_bits {
             0b00 => Self::LSL { rm, shift_source },
             0b01 => Self::LSR { rm, shift_source },
             0b10 => Self::ASR { rm, shift_source },
@@ -117,13 +117,13 @@ impl ShifterOperand {
                 }
             }
             _ => unreachable!(),
-        }
+        })
     }
 
-    fn parse(instruction: u32) -> ShifterOperand {
+    fn parse(instruction: u32) -> Result<ShifterOperand, &'static str> {
         let is_immediate = instruction.bit(25) == 1;
         if is_immediate {
-            Self::parse_immediate(instruction)
+            Ok(Self::parse_immediate(instruction))
         } else {
             Self::parse_shift(instruction)
         }
@@ -292,17 +292,17 @@ pub(super) struct DataProcessingFields {
 }
 
 impl DataProcessingFields {
-    fn parse(instruction: u32) -> DataProcessingFields {
+    fn parse(instruction: u32) -> Result<DataProcessingFields, &'static str> {
         let set = (instruction >> 20) & 1 != 0;
         let rn = (instruction >> 16) & 0xf;
         let rd = (instruction >> 12) & 0xf;
 
-        DataProcessingFields {
+        Ok(DataProcessingFields {
             set,
             rn,
             rd,
-            shifter: ShifterOperand::parse(instruction),
-        }
+            shifter: ShifterOperand::parse(instruction)?,
+        })
     }
 }
 
@@ -330,13 +330,17 @@ struct FlagUpdates {
     v: Option<bool>,
 }
 
+fn parse_error(msg: &str) -> String {
+    format!("Parse error: {}", msg)
+}
+
 #[inline]
 fn execute_op<F>(cpu: &mut Cpu, instruction: u32, flag_only: bool, op_closure: F)
 where
     // op1, op2, shifter carry
     F: Fn(u32, u32, bool) -> (u32, FlagUpdates),
 {
-    let fields = DataProcessingFields::parse(instruction);
+    let fields = DataProcessingFields::parse(instruction).expect("failed to parse");
     let (op2, c) = fields.shifter.op2(cpu);
 
     let op1 = if fields.shifter.takes_extra_cycle() && fields.rn == 15 {
@@ -394,8 +398,10 @@ impl ArmInstruction for And {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("AND r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("AND r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -416,8 +422,10 @@ impl ArmInstruction for Eor {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("EOR r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("EOR r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -438,8 +446,10 @@ impl ArmInstruction for Sub {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("SUB r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("SUB r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -460,8 +470,10 @@ impl ArmInstruction for Rsb {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("RSB r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("RSB r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -485,8 +497,10 @@ impl ArmInstruction for Add {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("ADD r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("ADD r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -516,8 +530,10 @@ impl ArmInstruction for Sbc {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("SBC r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("SBC r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -547,8 +563,10 @@ impl ArmInstruction for Rsc {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("RSC r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("RSC r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -579,8 +597,10 @@ impl ArmInstruction for Adc {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("ADC r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("ADC r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -601,8 +621,10 @@ impl ArmInstruction for Tst {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("TST r{}, {:?}", fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("TST r{}, {:?}", fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -623,8 +645,10 @@ impl ArmInstruction for Teq {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("TEQ r{}, {:?}", fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("TEQ r{}, {:?}", fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -646,8 +670,10 @@ impl ArmInstruction for Cmp {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("CMP r{}, {:?}", fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("CMP r{}, {:?}", fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -668,8 +694,10 @@ impl ArmInstruction for Cmn {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("CMN r{}, {:?}", fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("CMN r{}, {:?}", fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -691,8 +719,10 @@ impl ArmInstruction for Orr {
         })
     }
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("ORR r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("ORR r{}, r{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -712,8 +742,10 @@ impl ArmInstruction for Mov {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("MOV r{}, {:?}", fields.rd, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("MOV r{}, {:?}", fields.rd, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -734,8 +766,10 @@ impl ArmInstruction for Bic {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("BIC r{}, rd{}, {:?}", fields.rd, fields.rn, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("BIC r{}, rd{}, {:?}", fields.rd, fields.rn, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }
 
@@ -756,7 +790,9 @@ impl ArmInstruction for Mvn {
     }
 
     fn disassembly(&self, instruction: u32) -> String {
-        let fields = DataProcessingFields::parse(instruction);
-        format!("MVN r{}, {:?}", fields.rd, fields.shifter)
+        match DataProcessingFields::parse(instruction) {
+            Ok(fields) => format!("MVN r{}, {:?}", fields.rd, fields.shifter),
+            Err(msg) => parse_error(msg),
+        }
     }
 }

@@ -1,5 +1,3 @@
-use wasm_bindgen::prelude::wasm_bindgen;
-
 use crate::{bus::Bus, utils::AddressableBits};
 
 use super::{ArmLut, Cpu, State, ThumbLut};
@@ -33,12 +31,10 @@ impl Cpu {
     }
 }
 
-#[cfg_attr(feature="debugger", wasm_bindgen)]
 pub fn disassemble_arm(instruction: u32) -> String {
     Cpu::decode_arm(instruction).disassembly(instruction)
 }
 
-#[cfg_attr(feature="debugger", wasm_bindgen)]
 pub fn disassemble_thumb(instruction: u16) -> String {
     Cpu::decode_thumb(instruction).disassembly(instruction)
 }

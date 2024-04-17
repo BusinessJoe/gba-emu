@@ -9,3 +9,5 @@ pub use bus::Key;
 pub use cpu::Cpu;
 pub use gba::GbaCore;
 pub use ppu::Ppu;
+
+pub use cpu::{disassemble_arm, disassemble_thumb};

@@ -153,12 +153,12 @@
     >
         <table>
             {#each lines as line (line.address)}
+                <!--isExecuting={false && gba?.cpu.executing_pc === line.address}-->
+                <!--isPc={false && gba?.cpu.pc() === line.address}-->
                 <Line 
                     line={line} 
                     lineHeight={lineHeight} 
                     instructionSize={instructionSize} 
-                    isExecuting={false && $gba?.cpu.executing_pc === line.address}
-                    isPc={false && $gba?.cpu.pc() === line.address}
                     isBreakpoint={Boolean(instructionSize === 4 ? arm_breakpoints[line.address] : thumb_breakpoints[line.address])}
                     toggleBreakpoint={() => {}} />
             {/each}

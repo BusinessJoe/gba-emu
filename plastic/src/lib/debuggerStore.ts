@@ -10,7 +10,8 @@ export const DISPLAYS = {
 	tiles: new Uint8ClampedArray(32 * 64 * 8 * 8 * 4)
 };
 
-interface BackgroundData {
+// Information for one of four backgrounds
+interface BackgroundInfo {
 	priority: number;
 	map_base: number;
 	tile_base: number;
@@ -20,7 +21,30 @@ interface BackgroundData {
     size_1: number;
 }
 
-const initialBackground: BackgroundData = {
+// Reproduced GBA state to show in debugger
+interface DebuggerState {
+    instructions: {
+        [addr: number]: {
+            value: number
+        }
+    },
+    ppu: {
+        bg_mode: number,
+        background_0: BackgroundInfo,
+        background_1: BackgroundInfo,
+        background_2: BackgroundInfo,
+        background_3: BackgroundInfo,
+    }
+}
+
+// State of debugger controls
+interface DebuggerControls {
+    addresses: {
+        [addr: number]: true
+    }
+}
+
+const initialBackground: BackgroundInfo = {
 	priority: 0,
 	map_base: 0,
 	tile_base: 0,
@@ -29,18 +53,6 @@ const initialBackground: BackgroundData = {
     size_0: 0,
     size_1: 0,
 };
-
-interface DebuggerState {
-    instructions: {
-    },
-    ppu: {
-        bg_mode: number,
-        background_0: BackgroundData,
-        background_1: BackgroundData,
-        background_2: BackgroundData,
-        background_3: BackgroundData,
-    }
-}
 
 const initialData: DebuggerState = {
     instructions: {
@@ -55,6 +67,9 @@ const initialData: DebuggerState = {
     }
 };
 
+export const debuggerControlStore = writable<DebuggerControls>({
+    addresses: {}
+});
 export const debuggerStore = writable<DebuggerState>(initialData);
 
 gbaStore.subscribe((gba) => {

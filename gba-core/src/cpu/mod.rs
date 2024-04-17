@@ -12,6 +12,7 @@ use crate::utils::AddressableBits;
 
 pub use self::instrs::arm::ArmInstruction;
 pub use self::instrs::thumb::ThumbInstruction;
+pub use self::instrs::{disassemble_arm, disassemble_thumb};
 use self::regs::Regs;
 
 type ArmLut = [Box<dyn ArmInstruction>; 0x1000];
